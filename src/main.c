@@ -56,6 +56,8 @@
 #include "io.h"
 #include "comms.h"
 #include "global.h"
+//#include "display.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -158,7 +160,6 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   initComms();
-  writeMessage(">,12,08,77,FF,3E\n");
 
   /* USER CODE END 2 */
 
@@ -611,27 +612,35 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, CHG_EN_Pin|OUT_HS_ON_Pin|OUT_LS_ON_Pin|OUT_RELAY_Pin 
+  HAL_GPIO_WritePin(GPIOE, OUT_HS_ON_Pin|OUT_LS_ON_Pin|OUT_RELAY_Pin
                           |OUT_BUZZER_Pin, GPIO_PIN_RESET);
+
+  HAL_GPIO_WritePin(GPIOE, CHG_EN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, RUN_5V_Pin|RUN_12V_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, SOL_IN_Pin|AO_SEL_Pin|CO_POL_Pin|BT_PWR_EN_Pin 
+  HAL_GPIO_WritePin(GPIOD, AO_SEL_Pin|CO_POL_Pin|BT_PWR_EN_Pin
                           |BT_RESET_Pin|RS485_EN_Pin|RS485_TE_Pin, GPIO_PIN_RESET);
+
+  HAL_GPIO_WritePin(GPIOD, SOL_IN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : CHG_EN_Pin OUT_HS_ON_Pin OUT_LS_ON_Pin OUT_RELAY_Pin 
                            OUT_BUZZER_Pin */
-  GPIO_InitStruct.Pin = CHG_EN_Pin|OUT_HS_ON_Pin|OUT_LS_ON_Pin|OUT_RELAY_Pin 
-                          |OUT_BUZZER_Pin;
+  GPIO_InitStruct.Pin = CHG_EN_Pin;
+
+  //  GPIO_InitStruct.Pin = CHG_EN_Pin|OUT_HS_ON_Pin|OUT_LS_ON_Pin|OUT_RELAY_Pin
+//                          |OUT_BUZZER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CHRG_Pin ACPR_Pin SS_FAULT_Pin */
-  GPIO_InitStruct.Pin = CHRG_Pin|ACPR_Pin|SS_FAULT_Pin;
+  GPIO_InitStruct.Pin = CHRG_Pin|ACPR_Pin|SS_FAULT_Pin|OUT_HS_ON_Pin|OUT_LS_ON_Pin
+                        |OUT_RELAY_Pin|OUT_BUZZER_Pin;
+//  GPIO_InitStruct.Pin = CHRG_Pin|ACPR_Pin|SS_FAULT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -651,7 +660,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : SOL_IN_Pin AO_SEL_Pin CO_POL_Pin BT_PWR_EN_Pin 
                            BT_RESET_Pin RS485_EN_Pin RS485_TE_Pin */
-  GPIO_InitStruct.Pin = SOL_IN_Pin|AO_SEL_Pin|CO_POL_Pin|BT_PWR_EN_Pin 
+  GPIO_InitStruct.Pin = SOL_IN_Pin|BT_PWR_EN_Pin
                           |BT_RESET_Pin|RS485_EN_Pin|RS485_TE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -659,7 +668,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SOL_ST_Pin CO1_Pin CO2_Pin CO3_Pin */
-  GPIO_InitStruct.Pin = SOL_ST_Pin|CO1_Pin|CO2_Pin|CO3_Pin;
+  GPIO_InitStruct.Pin = AO_SEL_Pin|CO_POL_Pin|SOL_ST_Pin|CO1_Pin|CO2_Pin|CO3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);

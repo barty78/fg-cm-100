@@ -14,6 +14,7 @@
 #include "comms.h"
 #include "global.h"
 
+
 // Battery-Backed RAM variables
 //__attribute__((section(".battram"))) uint16_t ERROR_STATE;
 

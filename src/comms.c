@@ -193,6 +193,6 @@ void sendResponse(char* response)
  char msg[RESPONSE_BUFFER_LENGTH];
 
  sprintf(msg, "%s%02X\n", response, crc);  // Append CRC to message before writing out to Tx
- strcpy(lastMsg, msg);
+// strcpy(lastMsg, msg);
  writeMessage(msg);
 }

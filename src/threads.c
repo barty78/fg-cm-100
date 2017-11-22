@@ -16,6 +16,7 @@
 #include "comms.h"
 #include "parse.h"
 #include "threads.h"
+#include "packets.h"
 
 //extern uint16_t ERROR_STATE;
 
@@ -99,7 +100,7 @@ void displayThread(void const *argument)
 
 		taskENTER_CRITICAL();
 		taskEXIT_CRITICAL();
-		vTaskDelay(xDelay);
+//		vTaskDelay(xDelay);
 	}
 
 	osThreadTerminate(NULL);
@@ -145,7 +146,7 @@ void blinkThread(void const *argument)
 //		HAL_GPIO_TogglePin(OUT_BUZZER_GPIO_Port, OUT_BUZZER_Pin);
 //		HAL_GPIO_TogglePin(SOL_IN_GPIO_Port, SOL_IN_Pin);
 //		HAL_GPIO_TogglePin(OUT_RELAY_GPIO_Port, OUT_RELAY_Pin);
-		vTaskDelay(xDelay);
+//		vTaskDelay(xDelay);
 	}
 
 	osThreadTerminate(NULL);
@@ -222,7 +223,7 @@ void readPacketThread(void const *argument)
   taskENTER_CRITICAL();
    if (rxMessageHead != rxMessageTail)
    {
-    if (rxBuffer[rxMessageTail] == '>') packetPointer = 0;
+    if (rxBuffer[rxMessageTail] == SOF_RX) packetPointer = 0;
 
     packetBuffer[packetHead][packetPointer++] = rxBuffer[rxMessageTail];
     if (rxBuffer[rxMessageTail] == '\n')
