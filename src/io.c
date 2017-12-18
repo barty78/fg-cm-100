@@ -211,11 +211,20 @@ uint8_t readButtonInputs(uint8_t* debounceFlag, uint32_t* debounceStart, uint32_
 
 uint8_t readADC()
 {
+  volatile uint8_t tmp = 0;
  taskENTER_CRITICAL();
+
+   tmp |= ((HAL_GPIO_ReadPin(CO1_GPIO_Port, CO1_Pin)) << 0);
+   tmp |= ((HAL_GPIO_ReadPin(CO2_GPIO_Port, CO3_Pin)) << 1);
+   tmp |= ((HAL_GPIO_ReadPin(CO3_GPIO_Port, CO2_Pin)) << 2);
+
   if (flagADCConversionCompleted)
   {
-   float displaySuppVSample = ((float)(ADCValues[0] & 0x0FFF)) / 106.8727; // (2^12-1) / VREF / (R1+R2)/R2 = 4095.0 / 2.5 / (1000 + 69.8) * 69.8
-   float upsBattVSample = ((float)(ADCValues[1] & 0x0FFF)) / 106.8727;   // (2^12-1) / VREF / (R1+R2)/R2 = 4095.0 / 2.5 / (1000 + 69.8) * 69.8
+   float displaySuppVSample = ((float)(ADCValues[ADC_VIN] & 0x0FFF)) / 106.8727; // (2^12-1) / VREF / (R1+R2)/R2 = 4095.0 / 2.5 / (1000 + 69.8) * 69.8
+   float upsBattVSample = ((float)(ADCValues[ADC_VBAT] & 0x0FFF)) / 106.8727;   // (2^12-1) / VREF / (R1+R2)/R2 = 4095.0 / 2.5 / (1000 + 69.8) * 69.8
+   float loop1VSample = ((float)(ADCValues[ADC_LOOP1] & 0x0FFF)) / 1638; // (2^12-1 / VREF = 4095.0 / 2.5
+   float loop2VSample = ((float)(ADCValues[ADC_LOOP2] & 0x0FFF)) / 1638; // (2^12-1 / VREF = 4095.0 / 2.5
+   float loop3VSample = ((float)(ADCValues[ADC_LOOP3] & 0x0FFF)) / 1638; // (2^12-1 / VREF = 4095.0 / 2.5
 
    displaySuppVSum = MOVING_AVERAGE(displaySuppVSum, displaySuppVSample, VOLTAGE_FILTER_LENGTH);  // Calculate recursive moving average values
 

@@ -20,7 +20,7 @@ struct display {
   uint32_t lastSeen;
 } displays[MAX_DISPLAYS];
 
-uint8_t displayCount = 0;
+static uint8_t displayCount = 0;
 
 static const uint8_t ds1_DigitLookup[10] =
 {
@@ -87,6 +87,7 @@ uint8_t renewDisplay(uint8_t id);
 uint8_t checkForLostDisplay(void);
 void updateDisplays(void);
 void powerLedOn(void);
+void set7Seg(uint8_t value);
 
 
 

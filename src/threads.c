@@ -17,8 +17,15 @@
 #include "parse.h"
 #include "threads.h"
 #include "packets.h"
+#include "fg.h"
+#include "ui.h"
 
 //extern uint16_t ERROR_STATE;
+
+fg_config_t *config;
+
+static void l_init_board(fg_config_t **config);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -35,6 +42,10 @@
 
 uint8_t initThreads()
 {
+//  fg_config_t *config;
+  l_init_board(&config);
+
+
  #if CHECK_THREADS == 1  // Note: Setting the Start and End Tick values to the same value avoids an inadvertant watchdog trigger upon startup, (since this condition is checked in the monitor thread)
   writeMessageStartTick = 0;
   writeMessageEndTick = 0;
@@ -44,8 +55,8 @@ uint8_t initThreads()
   parsePacketEndTick = 0;
   readIOStartTick = 0;
   readIOEndTick = 0;
-  displayStartTick = 0;
-  displayEndTick = 0;
+  uiStartTick = 0;
+  uiEndTick = 0;
   blinkStartTick = 0;
   blinkEndTick = 0;
   //writeIOStartTick = 0;
@@ -56,8 +67,8 @@ uint8_t initThreads()
   toggleFlag = 0;
  #endif
 
- osThreadDef(display, displayThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
- displayTID = osThreadCreate(osThread(display), NULL);
+ osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+ uiTID = osThreadCreate(osThread(ui), NULL);
 
  osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  blinkTID = osThreadCreate(osThread(blink), NULL);
@@ -87,17 +98,19 @@ uint8_t initThreads()
 
 //-----------------------------------------------------------------------------
 
-void displayThread(void const *argument)
+void uiThread(void const *argument)
 {
 	const TickType_t xDelay = 300 / portTICK_PERIOD_MS;
 	uint8_t i = 0;
 	for( ;; )
 	{
 #if CHECK_THREADS == 1
-	    displayStartTick = HAL_GetTick();
-	    displayEndTick = displayStartTick + THREAD_WATCHDOG_DELAY;
+	    uiStartTick = HAL_GetTick();
+	    uiEndTick = uiStartTick + THREAD_WATCHDOG_DELAY;
 #endif
 
+	  ui_run_state_machine(config);
+	  fg_run_state_machine(config);
 		taskENTER_CRITICAL();
 		taskEXIT_CRITICAL();
 //		vTaskDelay(xDelay);
@@ -340,7 +353,7 @@ void readIOThread(void const *argument)
 //  readButtonInputs(debounceFlag, debounceStart, debounceEnd);
 //  osThreadYield();
 
-//  readADC();
+  readADC();
   osThreadYield();
 
  }
@@ -437,7 +450,7 @@ void monitorThread(void const *argument)
   #endif
 
   #if CHECK_STACK == 1
-   displayThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(displayTID);
+   uiThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(uiTID);
    blinkThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(blinkTID);
    writeMessageThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(writeMessageTID);
    readPacketThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(readPacketTID);
@@ -459,7 +472,7 @@ void monitorThread(void const *argument)
 
    if (blinkStartTick != blinkEndTick && (blinkStartTick < blinkEndTick || threadWatchdogTick < blinkStartTick) && (threadWatchdogTick >= blinkEndTick))
      firmwareReset(BLINK_TIMEOUT_ERROR);
-   if (displayStartTick != displayEndTick && (displayStartTick < displayEndTick || threadWatchdogTick < displayStartTick) && (threadWatchdogTick >= displayEndTick))
+   if (uiStartTick != uiEndTick && (uiStartTick < uiEndTick || threadWatchdogTick < uiStartTick) && (threadWatchdogTick >= uiEndTick))
      firmwareReset(DISPLAY_TIMEOUT_ERROR);
    if (monitorStartTick != monitorEndTick && (monitorStartTick < monitorEndTick || threadWatchdogTick < monitorStartTick) && (threadWatchdogTick >= monitorEndTick))
      firmwareReset(MONITOR_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
@@ -481,3 +494,11 @@ void monitorThread(void const *argument)
 
  if (!flagFirmwareReset) firmwareReset(THREAD_ERROR);
 }
+
+void l_init_board(fg_config_t **config)
+{
+  fg_init(config);
+  ui_init();
+
+}
+

@@ -47,6 +47,17 @@ typedef struct
  uint16_t pin;
 } GPIOPin;
 
+enum adc_inputs {
+  ADC_3V3,
+  ADC_5V,
+  ADC_12V,
+  ADC_VBAT,
+  ADC_VIN,
+  ADC_LOOP3,
+  ADC_LOOP2,
+  ADC_LOOP1,
+  TEMP
+};
 
 CRC_HandleTypeDef* handleCRC;
 TIM_HandleTypeDef* handleTIM1;//, *handleTIM6, *handleTIM8;
@@ -55,7 +66,7 @@ DMA_HandleTypeDef* handleDMA1;
 
 
 uint8_t analogChannel;
-uint16_t ADCValues[2];
+uint16_t ADCValues[9];
 
 uint8_t flagADCConversionCompleted;
 uint8_t pushButtons;

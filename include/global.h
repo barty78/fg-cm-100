@@ -64,7 +64,7 @@ uint8_t flagFirmwareReset;
 
 UBaseType_t blinkThreadStackHighWaterMark;
 
-UBaseType_t displayThreadStackHighWaterMark, writeMessageThreadStackHighWaterMark, readPacketThreadStackHighWaterMark,
+UBaseType_t uiThreadStackHighWaterMark, writeMessageThreadStackHighWaterMark, readPacketThreadStackHighWaterMark,
 			parsePacketThreadStackHighWaterMark, readIOThreadStackHighWaterMark, writeIOThreadStackHighWaterMark,
 			monitorThreadStackHighWaterMark;
 
