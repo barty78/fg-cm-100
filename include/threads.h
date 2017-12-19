@@ -17,6 +17,9 @@
 
  uint8_t toggleFlag;
 
+osMessageQId buttonQID;
+osMessageQId displayDigitsQID;
+
 osThreadId blinkTID, uartTID;
 osThreadId writeMessageTID, readPacketTID, parsePacketTID, readIOTID, /*writeIOTID,*/ monitorTID, uiTID;
 

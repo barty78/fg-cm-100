@@ -19,6 +19,8 @@
 #include "io.h"
 #include "parse.h"
 #include "packets.h"
+#include "threads.h"
+#include "buttons.h"
 
 //extern uint32_t FLOW_COUNT;
 //extern uint32_t FLOW_COUNT_CRC;
@@ -277,6 +279,43 @@ uint8_t parseCommand(char* command)
      sprintf(response, "%c,62,%02X,", SOF_TX, (unsigned)pushButtons);
      sendResponse(response);
     break;
+    case '5':
+      if (DEBUG) writeMessage("msgButPressed\r\n");
+      if (command[4] != SEPARATOR || command[7] != SEPARATOR || command[9] != SEPARATOR) return 1;
+      uint8_t button = digitsToInt(command, 5, 2, 10);
+      uint8_t pressType = digitsToInt(command, 8, 1, 10);
+      switch(button)
+      {
+        case button1:
+          if (pressType)
+            {
+              button = button1long;
+            } else {
+                button = button1short;
+            }
+          break;
+        case button2:
+          if (pressType)
+            {
+              button = button2long;
+            } else {
+                button = button2short;
+            }
+          break;
+        case button3:
+          if (pressType)
+            {
+              button = button3long;
+            } else {
+                button = button3short;
+            }
+          break;
+      }
+
+      osMessagePut(buttonQID, button, osWaitForever);
+
+    break;
+
     /*case '3':  // msgButWriteAllCmd  Syntax: ">,63,[leds:2],[CRC8]<LF>"  Example: ">,63,0A,[CRC8]<LF>"
      if (DEBUG) writeMessage("msgButWriteAllCmd\r\n");
      if (command[4] != ',' || command[7] != ',') return 1;

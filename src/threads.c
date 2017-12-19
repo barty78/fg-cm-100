@@ -19,12 +19,16 @@
 #include "packets.h"
 #include "fg.h"
 #include "ui.h"
+#include "buttons.h"
 
 //extern uint16_t ERROR_STATE;
 
 fg_config_t *config;
 
 static void l_init_board(fg_config_t **config);
+
+osMessageQDef(buttons, 1, uint8_t);
+osMessageQDef(display_digits, 1, uint8_t);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,7 +38,6 @@ static void l_init_board(fg_config_t **config);
 //  DESCRIPTION: Define and initialise all thread descriptors.
 //
 //  NOTES:       1. Uses CMSIS-RTOS API macro, "osThreadDef"
-
 //
 //  AUTHOR: Keith Willis <keith@masters-young.com.au>
 //
@@ -66,6 +69,13 @@ uint8_t initThreads()
   retryWaitTick = 0;
   toggleFlag = 0;
  #endif
+
+
+ buttonQID = osMessageCreate(osMessageQ(buttons), NULL);
+ vQueueAddToRegistry(buttonQID, "buttons");
+
+ displayDigitsQID = osMessageCreate(osMessageQ(display_digits), NULL);
+ vQueueAddToRegistry(displayDigitsQID, "display_digits");
 
  osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  uiTID = osThreadCreate(osThread(ui), NULL);
@@ -108,7 +118,7 @@ void uiThread(void const *argument)
 	    uiStartTick = HAL_GetTick();
 	    uiEndTick = uiStartTick + THREAD_WATCHDOG_DELAY;
 #endif
-
+//	  osMessagePut(msgQID, ++i, osWaitForever);
 	  ui_run_state_machine(config);
 	  fg_run_state_machine(config);
 		taskENTER_CRITICAL();
@@ -433,14 +443,9 @@ void writeIOThread(void const *argument)
 
 void monitorThread(void const *argument)
 {
- char response[RESPONSE_BUFFER_LENGTH];
+// char response[RESPONSE_BUFFER_LENGTH];
 
- uint8_t pushButtonsThread, prevButtons;
  size_t freeHeap = configTOTAL_HEAP_SIZE;
-
- taskENTER_CRITICAL();
-  prevButtons = pushButtons;
- taskEXIT_CRITICAL();
 
  while(1)
  {

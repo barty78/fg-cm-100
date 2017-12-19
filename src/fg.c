@@ -30,6 +30,7 @@
 
 #include "fg.h"
 #include "display.h"
+#include "threads.h"
 
 //
 // Local Globals
@@ -114,6 +115,14 @@ void fg_run_state_machine(fg_config_t *config)
   static uint32_t      sd_countdn       = 0xFFFFFFFF;
   static fg_state_t    prev_state       = fg_state_num_states;
   fg_state_t           next_state       = fg_state_num_states; // Doesn't need to be initialised. Done so to keep compiler happy.
+
+  // Check for messages in queues
+  osEvent evt = osMessageGet(buttonQID, 10);
+  volatile uint8_t val;
+  if (evt.status == osEventMessage)
+    {
+      val = (uint8_t)evt.value.v;
+    }
 
 
   //
@@ -227,7 +236,12 @@ fg_state_t fg_handle_shutdown_pending(fg_state_t prev_state, uint32_t *sd_countd
   }
 
   *sd_countdn--;
-//  set7Seg(*sd_countdn); // Update the display with the count
+  /*osEvent evt = osMessagePut(displayDigitsQID, (uint8_t)sd_countdn, 0);
+  if (evt.status == osEventMessage)
+    {
+
+    }
+*///  set7Seg(*sd_countdn); // Update the display with the count
   if (0 == *sd_countdn)
     {
       return (fg_state_shutdown_active);
