@@ -20,9 +20,7 @@ static char	id_string[ID_STRING_LENGTH+1];
 
 
 // Battery-Backed SRAM variables
-#define ERROR_STATE (*(__IO uint32_t *) (RTC_BKP0R))
-//#define FLOW_COUNT (*(__IO uint32_t *) (BKPSRAM_BASE + 2))
-//#define FLOW_COUNT_CRC (*(__IO uint32_t *) (BKPSRAM_BASE + 6))
+#define ERROR_STATE (*(__IO uint32_t *) (BKPSRAM_BASE + sizeof(fg_config_t)))
 
 // Error Definitions
 #define SYSTEM_ERROR               0x0001
@@ -43,12 +41,65 @@ static char	id_string[ID_STRING_LENGTH+1];
 #define DISPLAY_TIMEOUT_ERROR	     0x0010
 #define BLINK_TIMEOUT_ERROR        0x0011
 
+// Alarm Definitions
+#define NORMAL                     0x0001
+#define ISOLATED                   0x0002
+#define FAULT                      0x0003
+#define FAULT_DET                  0x0004
+#define FAULT_LP                   0x0005
+#define FAULT_CYLDIS               0x0006
+#define FAULT_SOL                  0x0007
+#define FAULT_DISP                 0x0008
+#define ALARM                      0x0009
+#define SHDN                       0x000A
+
+
 #define THREAD_WATCHDOG_DELAY (60000)  // 60 seconds Shutdown Delay, (system will be shutdown when any thread watchdog flag is not reset within this period)
 
 #define STM32_UUID ((uint32_t *)0x1FFF7A10)  // STM32F205 Unique Identifier Address
 
 uint8_t flagFirmwareReset;
 
+typedef enum {
+  fg_truck_type_12V = 0,
+  fg_truck_type_24V,
+  fg_truck_type_num_types
+} fg_truck_type_t;
+
+typedef enum {
+  fg_indicate = 0,
+  fg_shutdown
+} fg_system_type_t;
+
+typedef enum {
+  normal,
+  isolated,
+  fault,
+  alarm
+} fg_alarm_state_type_t;
+
+typedef struct {
+  uint8_t             num_batts;
+//  has_batt_config_t   bat_config[2];
+  fg_system_type_t    system_type;
+  uint32_t            shutdown_timeout;
+  //uint8_t       config_enable;
+} fg_factory_config_t;
+
+typedef struct {
+  uint32_t            tmp;
+} fg_user_config_t;
+
+typedef struct {
+  fg_factory_config_t   factory;
+  fg_user_config_t      user;
+} fg_config_t;
+
+typedef struct {
+  fg_alarm_state_type_t      state;
+} fg_alarm_state_t;
+
+extern fg_config_t *BKPSRAM;
 // Global debugging flag. Only set when testing code. Do NOT set in production code!
 #ifdef STMDEBUG
 #define DEBUG 1

@@ -29,6 +29,7 @@
 
 #include "stm32f2xx_hal.h"
 #include "cmsis_os.h"
+#include "global.h"
 
 typedef enum {
   fg_state_disabled = 0,
@@ -44,34 +45,6 @@ typedef enum {
   fg_state_shutdown_active,
   fg_state_num_states
 } fg_state_t;
-
-typedef enum {
-  fg_truck_type_12V = 0,
-  fg_truck_type_24V,
-  fg_truck_type_num_types
-} fg_truck_type_t;
-
-typedef enum {
-  fg_indicate = 0,
-  fg_shutdown
-} fg_system_type_t;
-
-typedef struct {
-  uint8_t             num_batts;
-//  has_batt_config_t   bat_config[2];
-  fg_system_type_t    system_type;
-  uint32_t            shutdown_timeout;
-  //uint8_t       config_enable;
-} fg_factory_config_t;
-
-typedef struct {
-  uint32_t            tmp;
-} fg_user_config_t;
-
-typedef struct {
-  fg_factory_config_t   factory;
-  fg_user_config_t      user;
-} fg_config_t;
 
 void fg_init(fg_config_t **config);
 

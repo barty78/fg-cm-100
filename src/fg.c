@@ -36,7 +36,9 @@
 // Local Globals
 //
 
-fg_config_t l_fg_config;
+fg_config_t l_config;
+fg_config_t *l_fg_config;
+fg_alarm_state_t *l_fg_alarm_state;
 
 
 static fg_state_t  l_curr_state    = fg_state_ready;    //!< The current state of the HAS state machine.
@@ -64,9 +66,6 @@ static uint8_t  l_batt_crit_flag;
 // Strings for state machine states.
 //
 
-
-
-
 //
 // Local Prototypes
 //
@@ -89,11 +88,30 @@ void fg_init(fg_config_t **config )
     l_diag_start  = 0;
     l_diag_stop   = 0;
 
+    l_config.factory.system_type = fg_shutdown;
+    l_config.factory.shutdown_timeout = 30;
 
-    l_fg_config.factory.system_type = fg_shutdown;
-    l_fg_config.factory.shutdown_timeout = 30;
+    *config = &l_config;
 
-    *config = &l_fg_config;
+//    fg_config_t *BKPSRAM_CONFIG = (fg_config_t *)BKPSRAM_BASE;
+    l_fg_config = (fg_config_t *) BKPSRAM_BASE;
+    l_fg_alarm_state = (fg_alarm_state_t *) BKPSRAM_BASE + sizeof(fg_config_t);
+
+    fg_alarm_state_t *BKPSRAM_ALARM_STATE = (fg_alarm_state_t *)BKPSRAM_BASE + sizeof(fg_config_t);
+
+    volatile fg_config_t ret = *(fg_config_t*) l_fg_config;
+
+    l_fg_config->factory.shutdown_timeout = 50;
+    l_fg_config->factory.system_type = fg_shutdown;
+
+//    BKPSRAM_CONFIG->factory.shutdown_timeout = 30;
+//    BKPSRAM_CONFIG->factory.system_type = fg_shutdown;
+
+    l_fg_alarm_state->state = alarm;
+    BKPSRAM_ALARM_STATE->state = isolated;
+    //TODO - Just to test mem offset is correct.
+//    ERROR_STATE = BLINK_TIMEOUT_ERROR;
+    volatile uint8_t tmp = sizeof(fg_config_t);
 
 }
 

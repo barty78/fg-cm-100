@@ -190,7 +190,11 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  initSystem();  // Needs to be done before initThreads so that BKPSRAM is configured before l_init_board called..
+
   initThreads();
+
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -216,10 +220,6 @@ int main(void)
 
 }
 
-//void l_init_board(fg_config_t **config)
-//{
-//
-//}
 
 void bootloaderInit()
 {

@@ -162,8 +162,8 @@ void initSystem()
 
  __PWR_CLK_ENABLE();          // Enable the PWR clock
  HAL_PWR_EnableBkUpAccess();  // Enable access to the backup domain
- //__BKPSRAM_CLK_ENABLE();      // Enable backup SRAM Clock
- //HAL_PWREx_EnableBkUpReg();   // Enable the Backup SRAM low power Regulator to retain it's content in VBAT mode, (This will wait until the Backup SRAM low power Regulator is ready)
+ __BKPSRAM_CLK_ENABLE();      // Enable backup SRAM Clock
+ HAL_PWREx_EnableBkUpReg();   // Enable the Backup SRAM low power Regulator to retain it's content in VBAT mode, (This will wait until the Backup SRAM low power Regulator is ready)
 
  if (DEBUG) writeMessage("DEBUG START\r\n");
 
