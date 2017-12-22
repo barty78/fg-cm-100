@@ -281,8 +281,11 @@ uint8_t parseCommand(char* command)
     break;
     case '5':
       if (DEBUG) writeMessage("msgButPressed\r\n");
-      if (command[4] != SEPARATOR || command[7] != SEPARATOR || command[9] != SEPARATOR) return 1;
+      if (command[4] != SEPARATOR || command[7] != SEPARATOR) return 1;
       uint8_t button = digitsToInt(command, 5, 2, 10);
+      osMessagePut(buttonQID, button, 0);
+#ifdef ADV_BUTTON
+      if (command[9] != SEPARATOR) return 1;
       uint8_t pressType = digitsToInt(command, 8, 1, 10);
       switch(button)
       {
@@ -313,7 +316,7 @@ uint8_t parseCommand(char* command)
       }
 
       osMessagePut(buttonQID, button, osWaitForever);
-
+#endif
     break;
 
     /*case '3':  // msgButWriteAllCmd  Syntax: ">,63,[leds:2],[CRC8]<LF>"  Example: ">,63,0A,[CRC8]<LF>"

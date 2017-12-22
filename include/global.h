@@ -15,12 +15,15 @@
 static char	id_string[ID_STRING_LENGTH+1];
 
 // Debug Definitions
-#define CHECK_STACK 1    // Global Thread Stack debugging flag, (Set to 1 to enable stack monitoring and overflow exceptions)
-#define CHECK_THREADS 1  // Monitor Thread loop durations
+#define CHECK_STACK 1                               // Global Thread Stack debugging flag, (Set to 1 to enable stack monitoring and overflow exceptions)
+#define CHECK_THREADS 1                             // Monitor Thread loop durations
 
+#define BUTTON_HOLD_DELAY                 (2000)    // 2 seconds Button Hold Delay
+#define SYSTEM_ISOLATE_BUTTON_HOLD_DELAY  (7000)    // 7 second hold delay for system isolation
+#define SYSTEM_RESET_BUTTON_HOLD_DELAY    (7000)    // 7 second hold delay for system isolation
 
 // Battery-Backed SRAM variables
-#define ERROR_STATE (*(__IO uint32_t *) (BKPSRAM_BASE + sizeof(fg_config_t)))
+#define ERROR_STATE                       (*(__IO uint32_t *) (BKPSRAM_BASE + sizeof(fg_config_t)))
 
 // Error Definitions
 #define SYSTEM_ERROR               0x0001

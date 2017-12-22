@@ -1,11 +1,21 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
+#define NUM_BUTTONS     3
+
 typedef enum {
+  no_button = 0,
   button1 = 1,
   button2 = 2,
   button3 = 4
 } fg_button_type_t;
+
+typedef enum {
+  inc = 3,
+  sys_reset = 5,        // Define two button hold for system function - Reset
+  sys_isolate = 5,      // Define two button hold for system function - Isolate
+  dec = 6
+} fg_button_fn_t;
 
 typedef enum {
   shortPress = 0,

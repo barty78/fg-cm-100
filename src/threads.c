@@ -80,8 +80,8 @@ uint8_t initThreads()
  osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  uiTID = osThreadCreate(osThread(ui), NULL);
 
- osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
- blinkTID = osThreadCreate(osThread(blink), NULL);
+// osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+// blinkTID = osThreadCreate(osThread(blink), NULL);
 
  osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
@@ -110,7 +110,7 @@ uint8_t initThreads()
 
 void uiThread(void const *argument)
 {
-	const TickType_t xDelay = 300 / portTICK_PERIOD_MS;
+	const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
 	uint8_t i = 0;
 	for( ;; )
 	{
@@ -118,12 +118,13 @@ void uiThread(void const *argument)
 	    uiStartTick = HAL_GetTick();
 	    uiEndTick = uiStartTick + THREAD_WATCHDOG_DELAY;
 #endif
-//	  osMessagePut(msgQID, ++i, osWaitForever);
-	  ui_run_state_machine(config);
-	  fg_run_state_machine(config);
-		taskENTER_CRITICAL();
-		taskEXIT_CRITICAL();
-//		vTaskDelay(xDelay);
+	    //	  osMessagePut(msgQID, ++i, osWaitForever);
+//	    taskENTER_CRITICAL();
+	    ui_run_state_machine(config);
+	    fg_run_state_machine(config);
+
+//	    taskEXIT_CRITICAL();
+//	    vTaskDelay(xDelay);
 	}
 
 	osThreadTerminate(NULL);
@@ -300,34 +301,39 @@ void parsePacketThread(void const *argument)
   taskEXIT_CRITICAL();
 
   if (received == 1)
-  {
-   taskENTER_CRITICAL();
-    for (i=0; i<RX_BUFFER_LENGTH && packetBuffer[packetTail][i] != '\n'; i++) command[i] = packetBuffer[packetTail][i];
-    if (++packetTail >= PACKET_BUFFER_LENGTH) packetTail = 0;
+    {
+      if (packetBuffer[packetTail][0] == SOF_RX)
+        {
+          taskENTER_CRITICAL();
+          for (i=0; i<RX_BUFFER_LENGTH && packetBuffer[packetTail][i] != '\n'; i++) command[i] = packetBuffer[packetTail][i];
+          if (++packetTail >= PACKET_BUFFER_LENGTH) packetTail = 0;
 
+#ifdef DISABLE
+          //TODO - We want to check if the packet is just an echo of a message we just sent.
+          //If it is, then clear the flag and wait for next packet.  Don't add it to the packetBuffer for parsing
+          //If it is not, then there was contention and we need to backoff and retry.
+          if (flagByteTransmitted && flagPacketReceived)
+            {
+              if (memcmp(&command, &lastMsg, strlen(lastMsg)) != 0)
+                {
+                  retryWaitTick = HAL_GetTick() + rand();
+                } else {
+                    retryWaitTick = 0;
+                }
+              if (HAL_GetTick() > retryWaitTick) sendResponse(lastMsg);
+            }
+#endif
 
-   //TODO - We want to check if the packet is just an echo of a message we just sent.
-   //If it is, then clear the flag and wait for next packet.  Don't add it to the packetBuffer for parsing
-   //If it is not, then there was contention and we need to backoff and retry.
-   if (flagByteTransmitted && flagPacketReceived)
-   {
-	   if (memcmp(&command, &lastMsg, strlen(lastMsg)) != 0)
-	   {
-		   retryWaitTick = HAL_GetTick() + rand();
-	   } else {
-		   retryWaitTick = 0;
-	   }
-	   if (HAL_GetTick() > retryWaitTick) sendResponse(lastMsg);
+          flagPacketReceived = 0;
+          taskEXIT_CRITICAL();
+        }
 
-	   flagPacketReceived = 0;
-	   taskEXIT_CRITICAL();
-   }
-   if (i < RX_BUFFER_LENGTH)  // Check for Rx Buffer Overrun
-   {
-    command[i] = 0;  // Null terminate the command string
-    parseCommand(command);
-   }
-  }
+      if (i < RX_BUFFER_LENGTH)  // Check for Rx Buffer Overrun
+        {
+          command[i] = 0;  // Null terminate the command string
+          parseCommand(command); // Only parse the command if it has a valid SOF char.   }
+        }
+    }
 
   osThreadYield();
  }

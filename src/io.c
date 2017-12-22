@@ -132,54 +132,12 @@ uint8_t initIO()
 
  displaySuppV = 0.0;
 
- pushButtons = 0;
-
  //__HAL_TIM_GET_COUNTER(handleTIM1) = 0;
  //HAL_TIM_Base_Start(handleTIM1);         // Start the Flow Counters
 
  return 0;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// readButtonInputs
-//
-//  DESCRIPTION: Read the state of all the Button Inputs
-//
-//  NOTES:       1. This routine is called by the "readIOThread" to set the value of the "pushButtons" variable
-//               2. /BUT1-3    Inputs (with Pullups)  Read Button state, (active low)
-//               3. Pin is LOW when Button Pressed
-//               4. The routine uses the "delayedResponse" function template to debounce each button by "DEBOUNCE_DELAY" milliseconds
-//
-//  AUTHOR:      Keith Willis <keith@masters-young.com.au>
-//
-///////////////////////////////////////////////////////////////////////////////
-
-uint8_t readButtonInputs(uint8_t* debounceFlag, uint32_t* debounceStart, uint32_t* debounceEnd)
-{
- GPIO_PinState pinState;
-
- for (uint8_t i=0; i<3; i++)
- {
-  uint8_t condition, bit = (uint8_t)pow(2, i);
-  pinState = HAL_GPIO_ReadPin(buttonInputs[i].port, buttonInputs[i].pin);
-
-  taskENTER_CRITICAL();
-   condition = (((pinState == GPIO_PIN_RESET) && ((pushButtons & bit) == 0)) || ((pinState == GPIO_PIN_SET) && ((pushButtons & bit) == bit))) ? 1 : 0;
-  taskEXIT_CRITICAL();
-
-  if (delayedResponse(condition, &(debounceFlag[i]), NULL, &(debounceStart[i]), &(debounceEnd[i]), NULL, DEBOUNCE_DELAY, 0, NULL))
-  {
-   taskENTER_CRITICAL();
-    if ((pinState == GPIO_PIN_RESET)) pushButtons |= bit;
-    else pushButtons &= ~bit;
-   taskEXIT_CRITICAL();
-  }
- }
-
- return 0;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
