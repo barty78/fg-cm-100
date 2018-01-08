@@ -65,11 +65,18 @@ uint8_t renewDisplay(uint8_t id)
  * Check for lost display
  * @return
  */
-uint8_t checkForLostDisplays(void)
+uint8_t checkForLostDisplay(void)
 {
   for (int i = 0; i < displayCount; i++)
     {
-      if (HAL_GetTick() > (displays[i].lastSeen + DISPLAY_TIMEOUT)) return 1;
+      if (HAL_GetTick() > (displays[i].lastSeen + DISPLAY_TIMEOUT))
+        {
+          if (displayCount > 0)
+            {
+              displayCount--;
+            }
+          return 1;
+        }
     }
 
   return 0;
@@ -81,6 +88,11 @@ uint8_t checkForLostDisplays(void)
 void updateDisplays(void)
 {
 
+}
+
+uint8_t activeDisplayCount(void)
+{
+  return displayCount;
 }
 
 void powerLedOn(void)

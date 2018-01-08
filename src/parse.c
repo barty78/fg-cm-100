@@ -387,6 +387,11 @@ uint8_t parseCommand(char* command)
       break;
    }
    break;
+   case '9':  // msgDispAckCmd  Syntax: "<,99,[ID:1],[CRC8]<LF>"
+     if (command[4] != SEPARATOR || command[6] != SEPARATOR) return 1;
+     uint8_t id = digitsToInt(command, 5, 1, 10);
+     renewDisplay(id);
+     break;
  }
 
  return 0;

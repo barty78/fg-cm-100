@@ -20,6 +20,7 @@
 #include "fg.h"
 #include "ui.h"
 #include "buttons.h"
+#include "display.h"
 
 //extern uint16_t ERROR_STATE;
 
@@ -77,11 +78,11 @@ uint8_t initThreads()
  displayDigitsQID = osMessageCreate(osMessageQ(display_digits), NULL);
  vQueueAddToRegistry(displayDigitsQID, "display_digits");
 
- osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+ osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*4);
  uiTID = osThreadCreate(osThread(ui), NULL);
 
-// osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
-// blinkTID = osThreadCreate(osThread(blink), NULL);
+ osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+ blinkTID = osThreadCreate(osThread(blink), NULL);
 
  osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
@@ -110,8 +111,17 @@ uint8_t initThreads()
 
 void uiThread(void const *argument)
 {
-	const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
+  char rpns[RESPONSE_BUFFER_LENGTH];
+	const TickType_t xDelay = 300 / portTICK_PERIOD_MS;
+	const TickType_t segDelay = 1000 / portTICK_PERIOD_MS;
+	uint32_t displayUpdateTick = HAL_GetTick();
 	uint8_t i = 0;
+	uint8_t counter = 99;
+	volatile uint8_t tens, ones;
+	char digits[3];
+	char d1[3];
+	char d2[3];
+
 	for( ;; )
 	{
 #if CHECK_THREADS == 1
@@ -120,11 +130,35 @@ void uiThread(void const *argument)
 #endif
 	    //	  osMessagePut(msgQID, ++i, osWaitForever);
 //	    taskENTER_CRITICAL();
-	    ui_run_state_machine(config);
-	    fg_run_state_machine(config);
+	    checkForLostDisplay();
+	    // Run UI state machine every 300ms, to refresh display
+	    if (i > 3)
+	      {
+//	        writeMessage("UI FSM Run\n");
+	        if (activeDisplayCount() > 0 && (uiStartTick > displayUpdateTick + segDelay))
+	          {
+	            taskENTER_CRITICAL();
+	            displayUpdateTick = HAL_GetTick();
+//	            writeMessage("UI");
+	            itoa10(counter, digits, 3);
+	            if (counter-- <= 0)counter = 99;
+	            tens = ds1_DigitLookup[(char)digitsToInt(digits, 0, 1, 10)];
+	            ones = ds2_DigitLookup[(char)digitsToInt(digits, 1, 1, 10)];
+	            sprintf(rpns, ">,16,%02X,%02X,77,FF,", tens, ones);
+	                          sendResponse(rpns);
+	            	            taskEXIT_CRITICAL();
+
+//	            sprintf(rpns, "%s, %s", d1, d2);
+//	            writeMessage(rpns);
+	          }
+
+//	        ui_run_state_machine(config);
+	        i = 0;
+	      }
+	    i++;
 
 //	    taskEXIT_CRITICAL();
-//	    vTaskDelay(xDelay);
+	    vTaskDelay(xDelay);
 	}
 
 	osThreadTerminate(NULL);
@@ -135,7 +169,7 @@ void uiThread(void const *argument)
 
 void blinkThread(void const *argument)
 {
-	const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
+	const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
 	uint8_t i = 0;
 	for( ;; )
 	{
@@ -151,10 +185,16 @@ void blinkThread(void const *argument)
 		} else {
 			writeMessage(">,12,08,77,FF,3E\n");
 			toggleFlag = 1;
+
 		}*/
+//		writeMessage("FG FSM Run\n");
+
 		taskEXIT_CRITICAL();
 
-//		writeMessage("HELLO WORLD\n");
+    fg_run_state_machine(config);
+
+
+
 /*
 		taskENTER_CRITICAL();
 		if (i>0)pwm(i-1, 0.0);
@@ -170,7 +210,7 @@ void blinkThread(void const *argument)
 //		HAL_GPIO_TogglePin(OUT_BUZZER_GPIO_Port, OUT_BUZZER_Pin);
 //		HAL_GPIO_TogglePin(SOL_IN_GPIO_Port, SOL_IN_Pin);
 //		HAL_GPIO_TogglePin(OUT_RELAY_GPIO_Port, OUT_RELAY_Pin);
-//		vTaskDelay(xDelay);
+		vTaskDelay(xDelay);
 	}
 
 	osThreadTerminate(NULL);

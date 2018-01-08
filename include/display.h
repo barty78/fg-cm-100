@@ -14,6 +14,7 @@
 #define     MAX_DISPLAYS 4              // Maximum number of allowed displays
 #define     DISPLAY_TIMEOUT (10000)    // 10 second display timeout
 
+
 struct display {
   char display[UID_LENGTH];
   uint8_t type;
@@ -88,8 +89,7 @@ uint8_t checkForLostDisplay(void);
 void updateDisplays(void);
 void powerLedOn(void);
 void set7Seg(uint8_t value);
-
-
+uint8_t activeDisplayCount(void);
 
 
 #endif
