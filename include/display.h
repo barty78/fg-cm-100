@@ -19,6 +19,7 @@ struct display {
   char display[UID_LENGTH];
   uint8_t type;
   uint32_t lastSeen;
+
 } displays[MAX_DISPLAYS];
 
 static uint8_t displayCount = 0;

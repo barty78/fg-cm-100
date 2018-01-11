@@ -176,15 +176,15 @@ uint8_t parseCommand(char* command)
 
  switch(command[2])  // First digit in command packet
  {
-  case '1':  // LEDs
+  case LED:  // LEDs
    switch(command[3])  // Second digit in command packet
    {
-   case '1':	// msgLedCmd	Syntax: ">,11,[ledVal:6],[],[],[CRC8]<LF>
+   case ALL:	// msgLedCmd	Syntax: ">,11,[ledVal:6],[],[],[CRC8]<LF>
 //	   if (!DEBUG) writeMessage("msgAllLedCmd\r\n");
 	   if (command[10] != SEPARATOR) return 1;
 	   uint8_t tmp = digitsToInt(command, 5, 6, 16);
 	   break;
-   case '2':	// msgSingleLedCmd	Syntax: ">,12,[led:2],[pwm:2],[iref:2],[CRC8]<LF>"	Example: ">,12,01,FF,FF,[CRC8]<LF>"
+   case SNGL:	// msgSingleLedCmd	Syntax: ">,12,[led:2],[pwm:2],[iref:2],[CRC8]<LF>"	Example: ">,12,01,FF,FF,[CRC8]<LF>"
 
 //	   if (!DEBUG) writeMessage("msgSingleLedCmd\r\n");
 	   if (command[4] != SEPARATOR || command[7] != SEPARATOR || command[10] != SEPARATOR || command[13] != SEPARATOR) return 1;
@@ -382,7 +382,7 @@ uint8_t parseCommand(char* command)
 
       sendResponse(&regDispCmdResp);                // Send the response
 
-      if (id >= 0) powerLedOn();                    // If display was registered, send power LED on command
+//      if (id >= 0) powerLedOn();                    // If display was registered, send power LED on command
 
       break;
    }

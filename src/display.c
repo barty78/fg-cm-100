@@ -22,6 +22,7 @@
 #include "global.h"
 #include "display.h"
 #include "comms.h"
+#include "packets.h"
 
 
 /**
@@ -67,6 +68,7 @@ uint8_t renewDisplay(uint8_t id)
  */
 uint8_t checkForLostDisplay(void)
 {
+
   for (int i = 0; i < displayCount; i++)
     {
       if (HAL_GetTick() > (displays[i].lastSeen + DISPLAY_TIMEOUT))

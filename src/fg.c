@@ -149,7 +149,7 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
 
       taskEXIT_CRITICAL();
 #ifdef DEBUG
-      sprintf(msg, "Recv - Button %02X\n", pushedButton);
+//      sprintf(msg, "Recv - Button %02X\n", pushedButton);
       writeMessage(msg);
 #endif
     }
@@ -161,14 +161,14 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
           if (pushedButton == dec)
             {
 #ifdef DEBUG
-              writeMessage("Dec...\n");
+//              writeMessage("Dec...\n");
 #endif
               //TODO - Implement decrement fn handler
             }
           if (pushedButton == inc)
             {
 #ifdef DEBUG
-              writeMessage("Inc...\n");
+//              writeMessage("Inc...\n");
 #endif
               //TODO - Implement increment fn handler
             }
@@ -183,7 +183,7 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
               {
                 //TODO - Go to appropriate state - Isolate/Reset
 #ifdef DEBUG
-                writeMessage("Isolate\n");
+//                writeMessage("Isolate\n");
 #endif
                 buttonPressedTick = 0;
               }
