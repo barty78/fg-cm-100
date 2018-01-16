@@ -90,7 +90,7 @@ uint8_t initThreads()
  osThreadDef(readPacket, readPacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  readPacketTID = osThreadCreate(osThread(readPacket), NULL);
 
- osThreadDef(parsePacket, parsePacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8); // + RX_BUFFER_LENGTH/4 + 2);
+ osThreadDef(parsePacket, parsePacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*12); // + RX_BUFFER_LENGTH/4 + 2);
  parsePacketTID = osThreadCreate(osThread(parsePacket), NULL);
 
  osThreadDef(readIO, readIOThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*4);
@@ -116,11 +116,10 @@ void uiThread(void const *argument)
 	const TickType_t segDelay = 1000 / portTICK_PERIOD_MS;
 	uint32_t displayUpdateTick = HAL_GetTick();
 	uint8_t i = 0;
+	uint8_t j = 0;
 	uint8_t counter = 99;
-	volatile uint8_t tens, ones;
-	char digits[3];
-	char d1[3];
-	char d2[3];
+
+	initDisplay();
 
 	for( ;; )
 	{
@@ -128,36 +127,31 @@ void uiThread(void const *argument)
 	    uiStartTick = HAL_GetTick();
 	    uiEndTick = uiStartTick + THREAD_WATCHDOG_DELAY;
 #endif
-	    //	  osMessagePut(msgQID, ++i, osWaitForever);
-//	    taskENTER_CRITICAL();
 	    checkForLostDisplay();
 
-//	    sprintf(rpns, ">,16")
 	    // Run UI state machine every 300ms, to refresh display
 	    if (i > 3)
 	      {
 //	        writeMessage("UI FSM Run\n");
-	        if (activeDisplayCount() > 0 && (uiStartTick > displayUpdateTick + segDelay))
+	        if (activeDisplayCount() > 0)
 	          {
-	            taskENTER_CRITICAL();
-	            displayUpdateTick = HAL_GetTick();
-	            itoa10(counter, digits, 3);
-	            if (counter-- <= 0)counter = 99;
-	            tens = ds1_DigitLookup[(char)digitsToInt(digits, 0, 1, 10)];
-	            ones = ds2_DigitLookup[(char)digitsToInt(digits, 1, 1, 10)];
-//	            memcpy(&dispRaw7SegCmd[5], &tens, 1);
-//	            memcpy(&dispRaw7SegCmd[7], &ones, 1);
-//	            itoa10(tens, &dispRaw7SegCmd[5], 1);
-//	            itoa10(ones, &dispRaw7SegCmd[7], 1);
-//	            memcpy(&dispRaw7SegCmd[], tens, 1);
-	            sprintf(rpns, ">,16,%02X,%02X,77,FF,", tens, ones);
-	            sendResponse(rpns);
-//	            sendResponse(&dispRaw7SegCmd);
-	            taskEXIT_CRITICAL();
-	          }
+	            if (uiStartTick > displayUpdateTick + segDelay)
+	              {
+	                taskENTER_CRITICAL();
+	                displayUpdateTick = HAL_GetTick();
+	                updateDigits(counter);
+	                if (counter-- <= 0)counter = 99;
 
-	        ui_run_state_machine(config);
-	        i = 0;
+//	                ledToggle(j);
+//	                j++;
+//	                if (j > 7) j = 0;
+	                taskEXIT_CRITICAL();
+	              }
+
+	            refresh();
+	            ui_run_state_machine(config);
+	            i = 0;
+	          }
 	      }
 	    i++;
 

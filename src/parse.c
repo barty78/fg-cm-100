@@ -179,10 +179,9 @@ uint8_t parseCommand(char* command)
   case LED:  // LEDs
    switch(command[3])  // Second digit in command packet
    {
-   case ALL:	// msgLedCmd	Syntax: ">,11,[ledVal:6],[],[],[CRC8]<LF>
+   case ALL:	// msgLedCmd	Syntax: ">,11,[ledVal:6],[GRPPWM:8],[GRPIREF:8],[CRC8]<LF> Example: ">,11,FFFFFF,FFFFFFFF,FFFFFFFF,[CRC8]<LF>"
 //	   if (!DEBUG) writeMessage("msgAllLedCmd\r\n");
-	   if (command[10] != SEPARATOR) return 1;
-	   uint8_t tmp = digitsToInt(command, 5, 6, 16);
+	   if (command[4] != SEPARATOR || command[11] != SEPARATOR || command[20] != SEPARATOR) return 1;
 	   break;
    case SNGL:	// msgSingleLedCmd	Syntax: ">,12,[led:2],[pwm:2],[iref:2],[CRC8]<LF>"	Example: ">,12,01,FF,FF,[CRC8]<LF>"
 
@@ -390,6 +389,9 @@ uint8_t parseCommand(char* command)
    case '9':  // msgDispAckCmd  Syntax: "<,99,[ID:1],[CRC8]<LF>"
      if (command[4] != SEPARATOR || command[6] != SEPARATOR) return 1;
      uint8_t id = digitsToInt(command, 5, 1, 10);
+     uint8_t button = digitsToInt(command, 7, 1, 10);
+     osMessagePut(buttonQID, button, 0);
+
      renewDisplay(id);
      break;
  }

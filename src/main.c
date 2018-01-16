@@ -647,6 +647,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, AO_SEL_Pin|CO_POL_Pin|BT_PWR_EN_Pin
                           |BT_RESET_Pin|RS485_EN_Pin|RS485_TE_Pin, GPIO_PIN_RESET);
 
+  HAL_GPIO_WritePin(GPIOD, RS485_RXE_Pin, GPIO_PIN_SET);
+
   HAL_GPIO_WritePin(GPIOD, SOL_IN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : CHG_EN_Pin OUT_HS_ON_Pin OUT_LS_ON_Pin OUT_RELAY_Pin 

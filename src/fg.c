@@ -150,7 +150,7 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
       taskEXIT_CRITICAL();
 #ifdef DEBUG
 //      sprintf(msg, "Recv - Button %02X\n", pushedButton);
-      writeMessage(msg);
+//      writeMessage(msg);
 #endif
     }
 
@@ -173,20 +173,36 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
               //TODO - Implement increment fn handler
             }
       } else {
+
           buttonPressedTick = 0;
       }
       prevButton = pushedButton;
+      if (pushedButton == dim) dimDisplay();
     } else {
         if (buttonPressedTick != 0)
           {
             if (pushedButton == sys_reset && (buttonPressedTick + SYSTEM_RESET_BUTTON_HOLD_DELAY < HAL_GetTick()))
               {
+                switch(state)
+                {
+                  case fg_state_ready:
+                    ledOn(LED_ISOLATED);
+                    ledOff(LED_NORMAL);
+                    l_curr_state = fg_state_isolated;
+                    break;
+                  case fg_state_isolated:
+                    ledOn(LED_NORMAL);
+                    ledOff(LED_ISOLATED);
+                    l_curr_state = fg_state_ready;
+                    break;
+                }
                 //TODO - Go to appropriate state - Isolate/Reset
 #ifdef DEBUG
 //                writeMessage("Isolate\n");
 #endif
                 buttonPressedTick = 0;
               }
+
           }
     }
 }
@@ -242,6 +258,8 @@ void fg_run_state_machine(fg_config_t *config)
       break;
   }
 
+
+
   prev_state = l_curr_state;
   l_curr_state = next_state;
 
@@ -250,7 +268,7 @@ void fg_run_state_machine(fg_config_t *config)
 
 fg_state_t fg_handle_disabled(fg_state_t prev_state)
 {
-  if (fg_handle_disabled != prev_state) {
+  if (fg_state_disabled != prev_state) {
         //Single execution code goes here, first entry into this state
     }
 
@@ -259,7 +277,8 @@ fg_state_t fg_handle_disabled(fg_state_t prev_state)
 
 fg_state_t fg_handle_ready(fg_state_t prev_state)
 {
-  if (fg_handle_ready != prev_state) {
+  if (fg_state_ready != prev_state) {
+      ledOn(LED_NORMAL);
         //Single execution code goes here, first entry into this state
     }
 
@@ -268,7 +287,7 @@ fg_state_t fg_handle_ready(fg_state_t prev_state)
 
 fg_state_t fg_handle_armed(fg_state_t prev_state)
 {
-  if (fg_handle_armed != prev_state) {
+  if (fg_state_armed != prev_state) {
         //Single execution code goes here, first entry into this state
     }
 
@@ -293,7 +312,7 @@ fg_state_t fg_handle_alarm(fg_config_t *config, fg_state_t prev_state, uint32_t 
 
 fg_state_t fg_handle_fault(fg_state_t prev_state)
 {
-  if (fg_handle_fault != prev_state) {
+  if (fg_state_fault != prev_state) {
         //Single execution code goes here, first entry into this state
     }
 
@@ -302,7 +321,7 @@ fg_state_t fg_handle_fault(fg_state_t prev_state)
 
 fg_state_t fg_handle_isolated(fg_state_t prev_state)
 {
-  if (fg_handle_isolated != prev_state) {
+  if (fg_state_isolated != prev_state) {
     //Single execution code goes here, first entry into this state
 }
 
@@ -316,7 +335,7 @@ fg_state_t fg_handle_shutdown_initiate(fg_state_t prev_state, uint32_t *sd_count
 
 fg_state_t fg_handle_shutdown_pending(fg_state_t prev_state, uint32_t *sd_countdn)
 {
-  if (fg_handle_shutdown_pending != prev_state) {
+  if (fg_state_shutdown_pending != prev_state) {
       //Single execution code goes here, first entry into this state
   }
 
@@ -336,7 +355,7 @@ fg_state_t fg_handle_shutdown_pending(fg_state_t prev_state, uint32_t *sd_countd
 
 fg_state_t fg_handle_shutdown_active(fg_state_t prev_state)
 {
-  if (fg_handle_shutdown_active != prev_state)
+  if (fg_state_shutdown_active != prev_state)
     {
 
     }
