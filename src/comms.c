@@ -39,6 +39,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 	  if (++rxMessageHead >= RX_BUFFER_LENGTH) rxMessageHead = 0;
 
    HAL_UART_Receive_IT(handleUART2, (uint8_t*)(&(rxBuffer[rxMessageHead])), 1);
+
   }
  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
@@ -66,7 +67,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
   {
    if (++txMessageTail >= TX_BUFFER_LENGTH) txMessageTail = 0;
    flagByteTransmitted = 1;  // Set transmission flag: transfer complete
-   HAL_GPIO_TogglePin(RS485_EN_GPIO_Port, RS485_EN_Pin);
+
+
+//   HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_RESET);
+//   HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
+   HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
    HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
 
   }

@@ -49,6 +49,7 @@ uint8_t initThreads()
 //  fg_config_t *config;
   l_init_board(&config);
 
+  writeMessage("Init");   // Need to send first message to get RS485 up.
 
  #if CHECK_THREADS == 1  // Note: Setting the Start and End Tick values to the same value avoids an inadvertant watchdog trigger upon startup, (since this condition is checked in the monitor thread)
   writeMessageStartTick = 0;
@@ -81,8 +82,8 @@ uint8_t initThreads()
  osThreadDef(ui, uiThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*4);
  uiTID = osThreadCreate(osThread(ui), NULL);
 
- osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
- blinkTID = osThreadCreate(osThread(blink), NULL);
+// osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+// blinkTID = osThreadCreate(osThread(blink), NULL);
 
  osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
  writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
@@ -112,7 +113,7 @@ uint8_t initThreads()
 void uiThread(void const *argument)
 {
   char rpns[RESPONSE_BUFFER_LENGTH];
-	const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
+	const TickType_t xDelay = 200 / portTICK_PERIOD_MS;
 	const TickType_t segDelay = 1000 / portTICK_PERIOD_MS;
 	uint32_t displayUpdateTick = HAL_GetTick();
 	uint8_t i = 0;
@@ -154,6 +155,7 @@ void uiThread(void const *argument)
 	          }
 	      }
 	    i++;
+	    fg_run_state_machine(config);
 
 	    vTaskDelay(xDelay);
 	}
@@ -242,7 +244,10 @@ void writeMessageThread(void const *argument)
 	   if (txMessageHead != txMessageTail)  // Data remaining in Transmit Buffer
 	   {
 		   flagByteTransmitted = 0;
-		   HAL_GPIO_TogglePin(RS485_EN_GPIO_Port, RS485_EN_Pin);
+//		   HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_SET);
+//		   HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
+		   HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
+		   HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
 		   HAL_UART_Transmit_IT(handleUART2, (uint8_t*)(&(txBuffer[txMessageTail])), 1);
 	   }
    }

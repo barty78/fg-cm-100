@@ -645,9 +645,10 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, AO_SEL_Pin|CO_POL_Pin|BT_PWR_EN_Pin
-                          |BT_RESET_Pin|RS485_EN_Pin|RS485_TE_Pin, GPIO_PIN_RESET);
+                          |BT_RESET_Pin|RS485_TXE_Pin|RS485_RXE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, RS485_TE_Pin, GPIO_PIN_SET);
 
-  HAL_GPIO_WritePin(GPIOD, RS485_RXE_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(GPIOD, , GPIO_PIN_SET);
 
   HAL_GPIO_WritePin(GPIOD, SOL_IN_Pin, GPIO_PIN_SET);
 
@@ -686,7 +687,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : SOL_IN_Pin AO_SEL_Pin CO_POL_Pin BT_PWR_EN_Pin 
                            BT_RESET_Pin RS485_EN_Pin RS485_TE_Pin */
   GPIO_InitStruct.Pin = SOL_IN_Pin|BT_PWR_EN_Pin
-                          |BT_RESET_Pin|RS485_EN_Pin|RS485_TE_Pin;
+                          |BT_RESET_Pin|RS485_TXE_Pin|RS485_RXE_Pin|RS485_TE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

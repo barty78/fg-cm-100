@@ -108,12 +108,12 @@
 #define BT_PWR_EN_GPIO_Port GPIOD
 #define BT_RESET_Pin GPIO_PIN_1
 #define BT_RESET_GPIO_Port GPIOD
-#define RS485_EN_Pin GPIO_PIN_3
-#define RS485_EN_GPIO_Port GPIOD
-#define RS485_RXE_Pin GPIO_PIN_7
-#define RS485_RXE_GPIO_Port GPIOD
+#define RS485_TXE_Pin GPIO_PIN_3
+#define RS485_TXE_GPIO_Port GPIOD
 #define RS485_TE_Pin GPIO_PIN_4
 #define RS485_TE_GPIO_Port GPIOD
+#define RS485_RXE_Pin GPIO_PIN_7
+#define RS485_RXE_GPIO_Port GPIOD
 #define PGOOD_3V3_Pin GPIO_PIN_5
 #define PGOOD_3V3_GPIO_Port GPIOB
 #define PGOOD_5V_Pin GPIO_PIN_6
