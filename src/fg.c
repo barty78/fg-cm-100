@@ -52,6 +52,11 @@ static uint8_t l_supply_ok_tick_cnt  = 0;
 static uint8_t l_diag_start      = 0;
 static uint8_t l_diag_stop       = 0;
 
+const TickType_t fastPulseDelay = 200 / portTICK_PERIOD_MS;
+const TickType_t slowPulseDelay = 500 / portTICK_PERIOD_MS;
+static uint32_t elapsed = 0;
+
+
 static uint32_t buttonPressedTick;
 uint8_t pushButtonsThread;
 uint8_t prevButton = 0;
@@ -158,14 +163,14 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
     {
       if (pushedButton != no_button) {                          // Button changed and didn't go back to default - no buttons
           buttonPressedTick = HAL_GetTick();
-          if (pushedButton == dec)
+          if (pushedButton == dec && l_curr_state == fg_state_isolated)
             {
 #ifdef DEBUG
 //              writeMessage("Dec...\n");
 #endif
               //TODO - Implement decrement fn handler
             }
-          if (pushedButton == inc)
+          if (pushedButton == inc && l_curr_state == fg_state_isolated)
             {
 #ifdef DEBUG
 //              writeMessage("Inc...\n");
@@ -186,21 +191,24 @@ void buttonPressedHandler(osEvent evt, fg_state_t state)
                 switch(state)
                 {
                   case fg_state_ready:
-                    ledOn(LED_ISOLATED);
-                    ledOff(LED_NORMAL);
+                    buzzerOn();
                     l_curr_state = fg_state_isolated;
                     break;
                   case fg_state_isolated:
-                    ledOn(LED_NORMAL);
-                    ledOff(LED_ISOLATED);
+                    buzzerOff();
                     l_curr_state = fg_state_ready;
                     break;
                 }
+//                buzzerToggle();
                 //TODO - Go to appropriate state - Isolate/Reset
 #ifdef DEBUG
 //                writeMessage("Isolate\n");
 #endif
                 buttonPressedTick = 0;
+              }
+            if (pushedButton == sd_test && (buttonPressedTick + SYSTEM_RESET_BUTTON_HOLD_DELAY < HAL_GetTick()))
+              {
+                l_curr_state = fg_state_shutdown_pending;
               }
 
           }
@@ -216,6 +224,8 @@ void fg_run_state_machine(fg_config_t *config)
   static uint32_t      sd_countdn       = 0xFFFFFFFF;
   static fg_state_t    prev_state       = fg_state_num_states;
   fg_state_t           next_state       = fg_state_num_states; // Doesn't need to be initialised. Done so to keep compiler happy.
+
+//  elapsed = HAL_GetTick();
 
   // Check for button presses
   osEvent evt = osMessageGet(buttonQID, 10);
@@ -278,8 +288,10 @@ fg_state_t fg_handle_disabled(fg_state_t prev_state)
 fg_state_t fg_handle_ready(fg_state_t prev_state)
 {
   if (fg_state_ready != prev_state) {
+      //Single execution code goes here, first entry into this state
       ledOn(LED_NORMAL);
-        //Single execution code goes here, first entry into this state
+      ledOff(LED_ISOLATED);
+      buzzerOff();
     }
 
   return (fg_state_ready);
@@ -322,7 +334,12 @@ fg_state_t fg_handle_fault(fg_state_t prev_state)
 fg_state_t fg_handle_isolated(fg_state_t prev_state)
 {
   if (fg_state_isolated != prev_state) {
-    //Single execution code goes here, first entry into this state
+      //Single execution code goes here, first entry into this state
+      ledOn(LED_ISOLATED);
+      ledOff(LED_NORMAL);
+      buzzerOn();
+
+
 }
 
   return (fg_state_isolated);
@@ -336,8 +353,16 @@ fg_state_t fg_handle_shutdown_initiate(fg_state_t prev_state, uint32_t *sd_count
 fg_state_t fg_handle_shutdown_pending(fg_state_t prev_state, uint32_t *sd_countdn)
 {
   if (fg_state_shutdown_pending != prev_state) {
+      elapsed = HAL_GetTick();
       //Single execution code goes here, first entry into this state
   }
+
+  if (HAL_GetTick() > (elapsed + fastPulseDelay))
+    {
+      ledToggle(LED_SHUTDOWN);
+      elapsed = HAL_GetTick();
+    }
+
 
   *sd_countdn--;
   /*osEvent evt = osMessagePut(displayDigitsQID, (uint8_t)sd_countdn, 0);

@@ -65,14 +65,12 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
 
   if (UartHandle == handleUART2)
   {
-   if (++txMessageTail >= TX_BUFFER_LENGTH) txMessageTail = 0;
-   flagByteTransmitted = 1;  // Set transmission flag: transfer complete
+//   if (++txMessageTail >= TX_BUFFER_LENGTH) txMessageTail = 0;
+      txMessageTail = txMessageHead;
+      flagByteTransmitted = 1;  // Set transmission flag: transfer complete
 
-
-//   HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_RESET);
-//   HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
-   HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
-   HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
+      HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
+      HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
 
   }
  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
@@ -169,10 +167,18 @@ uint8_t initComms()
 uint8_t writeMessage(char* msg)
 {
  taskENTER_CRITICAL();
+ if (strlen(msg) > (TX_BUFFER_LENGTH - txMessageHead))
+   {
+     txMessageHead = 0;
+     txMessageTail = 0;
+   }
   for (uint32_t i=0; i<strlen(msg); i++)
   {
    txBuffer[txMessageHead++] = msg[i];
-   if (txMessageHead >= TX_BUFFER_LENGTH) txMessageHead = 0;
+   if (txMessageHead >= TX_BUFFER_LENGTH)
+     {
+       txMessageHead = 0;
+     }
   }
  taskEXIT_CRITICAL();
 

@@ -49,7 +49,7 @@ uint8_t initThreads()
 //  fg_config_t *config;
   l_init_board(&config);
 
-  writeMessage("Init");   // Need to send first message to get RS485 up.
+  writeMessage("Init\n");   // Need to send first message to get RS485 up.
 
  #if CHECK_THREADS == 1  // Note: Setting the Start and End Tick values to the same value avoids an inadvertant watchdog trigger upon startup, (since this condition is checked in the monitor thread)
   writeMessageStartTick = 0;
@@ -85,10 +85,10 @@ uint8_t initThreads()
 // osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
 // blinkTID = osThreadCreate(osThread(blink), NULL);
 
- osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+ osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
  writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
 
- osThreadDef(readPacket, readPacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+ osThreadDef(readPacket, readPacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
  readPacketTID = osThreadCreate(osThread(readPacket), NULL);
 
  osThreadDef(parsePacket, parsePacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*12); // + RX_BUFFER_LENGTH/4 + 2);
@@ -113,7 +113,7 @@ uint8_t initThreads()
 void uiThread(void const *argument)
 {
   char rpns[RESPONSE_BUFFER_LENGTH];
-	const TickType_t xDelay = 200 / portTICK_PERIOD_MS;
+	const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
 	const TickType_t segDelay = 1000 / portTICK_PERIOD_MS;
 	uint32_t displayUpdateTick = HAL_GetTick();
 	uint8_t i = 0;
@@ -129,33 +129,35 @@ void uiThread(void const *argument)
 	    uiEndTick = uiStartTick + THREAD_WATCHDOG_DELAY;
 #endif
 	    checkForLostDisplay();
+      taskENTER_CRITICAL();
 
 	    // Run UI state machine every 300ms, to refresh display
-	    if (i > 3)
+	    if (i > 2)
 	      {
 //	        writeMessage("UI FSM Run\n");
 	        if (activeDisplayCount() > 0)
 	          {
 	            if (uiStartTick > displayUpdateTick + segDelay)
 	              {
-	                taskENTER_CRITICAL();
 	                displayUpdateTick = HAL_GetTick();
-	                updateDigits(counter);
-	                if (counter-- <= 0)counter = 99;
+//	                updateDigits(counter);
+//	                if (counter-- <= 0)counter = 99;
 
 //	                ledToggle(j);
 //	                j++;
 //	                if (j > 7) j = 0;
-	                taskEXIT_CRITICAL();
+//	                taskEXIT_CRITICAL();
 	              }
 
 	            refresh();
-	            ui_run_state_machine(config);
+//	            ui_run_state_machine(config);
 	            i = 0;
 	          }
 	      }
 	    i++;
-	    fg_run_state_machine(config);
+	    taskEXIT_CRITICAL();
+//	    refresh();
+//	    fg_run_state_machine(config);
 
 	    vTaskDelay(xDelay);
 	}
@@ -237,6 +239,7 @@ void writeMessageThread(void const *argument)
    writeMessageEndTick = writeMessageStartTick + THREAD_WATCHDOG_DELAY;
   #endif
 
+
    taskENTER_CRITICAL();
 
    if (flagByteTransmitted == 1)
@@ -248,7 +251,13 @@ void writeMessageThread(void const *argument)
 //		   HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
 		   HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
 		   HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
-		   HAL_UART_Transmit_IT(handleUART2, (uint8_t*)(&(txBuffer[txMessageTail])), 1);
+		   if (txMessageHead <= 0)
+		     {
+		       HAL_UART_Transmit_IT(handleUART2, (uint8_t*)(&(txBuffer[txMessageTail])), (TX_BUFFER_LENGTH - txMessageTail) + txMessageHead);
+		     } else {
+		         HAL_UART_Transmit_IT(handleUART2, (uint8_t*)(&(txBuffer[txMessageTail])), (txMessageHead - txMessageTail));
+		     }
+//		   HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)(&(txBuffer[txMessageTail]))
 	   }
    }
 
@@ -519,6 +528,8 @@ void monitorThread(void const *argument)
 //   pushButtonsThread = pushButtons;
    displaySuppV = displaySuppVSum/(float)VOLTAGE_FILTER_LENGTH;
   taskEXIT_CRITICAL();
+
+  fg_run_state_machine(config);
 
   #if CHECK_THREADS == 1
    uint32_t threadWatchdogTick = HAL_GetTick();

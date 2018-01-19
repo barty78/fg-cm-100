@@ -179,20 +179,23 @@ void ledOn(uint8_t led)
   display.ledStateBuffer |= (1 << led);
 }
 
-//void buzzerToggle(void)
-//{
-//  display.ledStateBuffer ^= (1 << BUZZER);
-//}
-//
-//void buzzerOn(void)
-//{
-//  display.ledStateBuffer |= (1 << BUZZER);
-//}
-//
-//void buzzerOff(void)
-//{
-//  display.ledStateBuffer &= ~(1 << BUZZER);
-//}
+void buzzerToggle(void)
+{
+  uint32_t tmp = (1 << BUZZER);
+  display.ledStateBuffer ^= tmp;
+}
+
+void buzzerOn(void)
+{
+  uint32_t tmp = (1 << BUZZER);
+  display.ledStateBuffer |= tmp;
+}
+
+void buzzerOff(void)
+{
+  uint32_t tmp = (1 << BUZZER);
+  display.ledStateBuffer &= ~tmp;
+}
 
 //void powerLedOn(void)
 //{

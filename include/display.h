@@ -16,7 +16,7 @@
 #define     DISPLAY_TIMEOUT   (10000)    // 10 second display timeout
 #define     TENS_DIGIT_OFFSET 9         //Offset to first LED segment in tens digit
 #define     ONES_DIGIT_OFFSET 16        //Offset to first LED segment in ones digit
-#define     BUZZER            24
+#define     BUZZER            23
 
 struct display {
   char display[UID_LENGTH];

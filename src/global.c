@@ -172,67 +172,67 @@ void initSystem()
  switch (ERROR_STATE)
  {
   case SYSTEM_ERROR:
-   sprintf(response, "<,FF,%04X,\"System Error\",", (unsigned)SYSTEM_ERROR);
+   sprintf(response, "<,FF,%04X,\"System Error\",\n", (unsigned)SYSTEM_ERROR);
    writeMessage(response);
   break;
 
   case THREAD_ERROR:
-   sprintf(response, "<,FF,%04X,\"Unknown Thread Error\",", (unsigned)THREAD_ERROR);
+   sprintf(response, "<,FF,%04X,\"Unknown Thread Error\",\n", (unsigned)THREAD_ERROR);
    writeMessage(response);
   break;
 
   case STACK_OVERFLOW_ERROR:
-   sprintf(response, "<,FF,%04X,\"Stack Overflow Error\",", (unsigned)STACK_OVERFLOW_ERROR);
+   sprintf(response, "<,FF,%04X,\"Stack Overflow Error\",\n", (unsigned)STACK_OVERFLOW_ERROR);
    writeMessage(response);
   break;
 
   case USER_RESET_ERROR:
-   sprintf(response, "<,FF,%04X,\"User Reset Error\",", (unsigned)USER_RESET_ERROR);
+   sprintf(response, "<,FF,%04X,\"User Reset Error\",\n", (unsigned)USER_RESET_ERROR);
    writeMessage(response);
   break;
 
   case WRITEMESSAGE_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Write Message Thread Timeout Error\",", (unsigned)WRITEMESSAGE_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Write Message Thread Timeout Error\",\n", (unsigned)WRITEMESSAGE_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case READPACKET_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Read Packet Thread Timeout Error\",", (unsigned)READPACKET_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Read Packet Thread Timeout Error\",\n", (unsigned)READPACKET_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case PARSEPACKET_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Parse Packet Thread Timeout Error\",", (unsigned)PARSEPACKET_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Parse Packet Thread Timeout Error\",\n", (unsigned)PARSEPACKET_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case READIO_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Read IO Thread Timeout Error\",", (unsigned)READIO_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Read IO Thread Timeout Error\",\n", (unsigned)READIO_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case WRITEIO_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Write IO Thread Timeout Error\",", (unsigned)WRITEIO_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Write IO Thread Timeout Error\",\n", (unsigned)WRITEIO_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case UNDERVOLTAGE_ERROR:
-   sprintf(response, "<,FF,%04X,\"Under-Voltage Error\",", (unsigned)UNDERVOLTAGE_ERROR);
+   sprintf(response, "<,FF,%04X,\"Under-Voltage Error\",\n", (unsigned)UNDERVOLTAGE_ERROR);
    writeMessage(response);
   break;
 
   case MONITOR_TIMEOUT_ERROR:
-   sprintf(response, "<,FF,%04X,\"Monitor Thread Timeout Error\",", (unsigned)MONITOR_TIMEOUT_ERROR);
+   sprintf(response, "<,FF,%04X,\"Monitor Thread Timeout Error\",\n", (unsigned)MONITOR_TIMEOUT_ERROR);
    writeMessage(response);
   break;
 
   case I2CREAD_TIMEOUT_ERROR:
-     sprintf(response, "<,FF,%04X,\"I2C Read Timeout Error\",", (unsigned)I2CREAD_TIMEOUT_ERROR);
+     sprintf(response, "<,FF,%04X,\"I2C Read Timeout Error\",\n", (unsigned)I2CREAD_TIMEOUT_ERROR);
      writeMessage(response);
     break;
 
   case I2CWRITE_TIMEOUT_ERROR:
-     sprintf(response, "<,FF,%04X,\"I2C Write Timeout Error\",", (unsigned)I2CWRITE_TIMEOUT_ERROR);
+     sprintf(response, "<,FF,%04X,\"I2C Write Timeout Error\",\n", (unsigned)I2CWRITE_TIMEOUT_ERROR);
      writeMessage(response);
     break;
  }

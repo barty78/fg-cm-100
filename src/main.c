@@ -329,9 +329,9 @@ static void MX_ADC1_Init(void)
   //                PA3   ADC_12V (IN3)
   //                PA4   ADC_VBAT  (IN4)
   //                PA5   ADC_VIN (IN5)
-  //                PB0   ADC_LOOP3 (IN8)
-  //                PB1   ADC_LOOP2 (IN9)
-  //                PB2   ADC_LOOP1 - NEEDS TO BE REALLOCATED
+  //                PA6   ADC_LOOP3 (IN8)
+  //                PA7   ADC_LOOP2 (IN9)
+  //                PB0   ADC_LOOP1 - NEEDS TO BE REALLOCATED
 
   /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */
@@ -390,7 +390,7 @@ static void MX_ADC1_Init(void)
 
   /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */
-  sConfig.Channel = ADC_CHANNEL_8;  //ADC_LOOP3
+  sConfig.Channel = ADC_CHANNEL_7;  //ADC_LOOP3
   sConfig.Rank = 7;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
     {
@@ -399,7 +399,7 @@ static void MX_ADC1_Init(void)
 
   /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */
-  sConfig.Channel = ADC_CHANNEL_9;  //ADC_LOOP2
+  sConfig.Channel = ADC_CHANNEL_8;  //ADC_LOOP2
   sConfig.Rank = 8;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
     {
@@ -605,12 +605,17 @@ static void MX_USART6_UART_Init(void)
 static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
+//  __HAL_RCC_DMA1_CLK_ENABLE();
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+  /* DMI interrupt init for USART2_TX */
+//  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+//  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 

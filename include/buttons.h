@@ -12,6 +12,7 @@ typedef enum {
 
 typedef enum {
   inc = 3,
+  sd_test = 3,          // Define two button hold for system function - Shutdown Test
   dim = 4,
   sys_reset = 5,        // Define two button hold for system function - Reset
   sys_isolate = 5,      // Define two button hold for system function - Isolate
