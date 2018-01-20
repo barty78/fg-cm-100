@@ -145,6 +145,7 @@ uint8_t initComms()
 
  taskEXIT_CRITICAL();
  HAL_UART_Receive_IT(handleUART2, (uint8_t*)(&(rxBuffer[rxMessageHead])), 1);
+
  return 0;
 }
 
