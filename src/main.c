@@ -324,14 +324,14 @@ static void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-//  PA1   ADC_3V3 (IN1)
+  //                PA1   ADC_3V3 (IN1)
   //                PA2   ADC_5V  (IN2)
   //                PA3   ADC_12V (IN3)
   //                PA4   ADC_VBAT  (IN4)
   //                PA5   ADC_VIN (IN5)
-  //                PA6   ADC_LOOP3 (IN8)
-  //                PA7   ADC_LOOP2 (IN9)
-  //                PB0   ADC_LOOP1 - NEEDS TO BE REALLOCATED
+  //                PA6   ADC_LOOP3 (IN6)
+  //                PA7   ADC_LOOP2 (IN7  )
+  //                PB0   ADC_LOOP1 (IN8)
 
   /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
    */

@@ -132,7 +132,7 @@ void uiThread(void const *argument)
       taskENTER_CRITICAL();
 
 	    // Run UI state machine every 300ms, to refresh display
-	    if (i > 2)
+	    if (i > 3)
 	      {
 //	        writeMessage("UI FSM Run\n");
 	        if (activeDisplayCount() > 0)
