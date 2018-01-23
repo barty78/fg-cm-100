@@ -49,13 +49,13 @@ uint8_t initThreads()
 //  fg_config_t *config;
   l_init_board(&config);
 
-  writeMessage("Init\n");   // Need to send first message to get RS485 up.
+//  writeMessage("Init");   // Need to send first message to get RS485 up.
 
  #if CHECK_THREADS == 1  // Note: Setting the Start and End Tick values to the same value avoids an inadvertant watchdog trigger upon startup, (since this condition is checked in the monitor thread)
-  writeMessageStartTick = 0;
-  writeMessageEndTick = 0;
-  readPacketStartTick = 0;
-  readPacketEndTick = 0;
+//  writeMessageStartTick = 0;
+//  writeMessageEndTick = 0;
+//  readPacketStartTick = 0;
+//  readPacketEndTick = 0;
   parsePacketStartTick = 0;
   parsePacketEndTick = 0;
   readIOStartTick = 0;
@@ -85,11 +85,11 @@ uint8_t initThreads()
 // osThreadDef(blink, blinkThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
 // blinkTID = osThreadCreate(osThread(blink), NULL);
 
- osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
- writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
+// osThreadDef(writeMessage, writeMessageThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
+// writeMessageTID = osThreadCreate(osThread(writeMessage), NULL);
 
- osThreadDef(readPacket, readPacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
- readPacketTID = osThreadCreate(osThread(readPacket), NULL);
+// osThreadDef(readPacket, readPacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*8);
+// readPacketTID = osThreadCreate(osThread(readPacket), NULL);
 
  osThreadDef(parsePacket, parsePacketThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE*12); // + RX_BUFFER_LENGTH/4 + 2);
  parsePacketTID = osThreadCreate(osThread(parsePacket), NULL);
@@ -353,11 +353,11 @@ void parsePacketThread(void const *argument)
 
   if (received == 1)
     {
-      if (packetBuffer[packetTail][0] == SOF_RX)
+      if (data[0] == SOF_RX)
         {
           taskENTER_CRITICAL();
-          for (i=0; i<RX_BUFFER_LENGTH && packetBuffer[packetTail][i] != '\n'; i++) command[i] = packetBuffer[packetTail][i];
-          if (++packetTail >= PACKET_BUFFER_LENGTH) packetTail = 0;
+          for (i=0; i<RX_BUFFER_LENGTH && data[i] != '\n'; i++) command[i] = data[i];
+//          if (++packetTail >= PACKET_BUFFER_LENGTH) packetTail = 0;
 
 #ifdef DISABLE
           //TODO - We want to check if the packet is just an echo of a message we just sent.
@@ -514,8 +514,8 @@ void monitorThread(void const *argument)
   #if CHECK_STACK == 1
    uiThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(uiTID);
    blinkThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(blinkTID);
-   writeMessageThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(writeMessageTID);
-   readPacketThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(readPacketTID);
+//   writeMessageThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(writeMessageTID);
+//   readPacketThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(readPacketTID);
    parsePacketThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(parsePacketTID);
    //readIOThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(readIOTID);
    //writeIOThreadStackHighWaterMark = uxTaskGetStackHighWaterMark(writeIOTID);
@@ -540,10 +540,10 @@ void monitorThread(void const *argument)
      firmwareReset(DISPLAY_TIMEOUT_ERROR);
    if (monitorStartTick != monitorEndTick && (monitorStartTick < monitorEndTick || threadWatchdogTick < monitorStartTick) && (threadWatchdogTick >= monitorEndTick))
      firmwareReset(MONITOR_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
-   if (writeMessageStartTick != writeMessageEndTick && (writeMessageStartTick < writeMessageEndTick || threadWatchdogTick < writeMessageStartTick) && (threadWatchdogTick >= writeMessageEndTick))
-     firmwareReset(WRITEMESSAGE_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
-   if (readPacketStartTick != readPacketEndTick && (readPacketStartTick < readPacketEndTick || threadWatchdogTick < readPacketStartTick) && (threadWatchdogTick >= readPacketEndTick))
-     firmwareReset(READPACKET_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
+//   if (writeMessageStartTick != writeMessageEndTick && (writeMessageStartTick < writeMessageEndTick || threadWatchdogTick < writeMessageStartTick) && (threadWatchdogTick >= writeMessageEndTick))
+//     firmwareReset(WRITEMESSAGE_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
+//   if (readPacketStartTick != readPacketEndTick && (readPacketStartTick < readPacketEndTick || threadWatchdogTick < readPacketStartTick) && (threadWatchdogTick >= readPacketEndTick))
+//     firmwareReset(READPACKET_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
    if (parsePacketStartTick != parsePacketEndTick && (parsePacketStartTick < parsePacketEndTick || threadWatchdogTick < parsePacketStartTick) && (threadWatchdogTick >= parsePacketEndTick))
      firmwareReset(PARSEPACKET_TIMEOUT_ERROR);  // Ignore tick values before the "wrap"
    /*if (readIOStartTick != readIOEndTick && (readIOStartTick < readIOEndTick || threadWatchdogTick < readIOStartTick) && (threadWatchdogTick >= readIOEndTick))

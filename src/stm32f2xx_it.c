@@ -35,6 +35,7 @@
 #include "stm32f2xx.h"
 #include "stm32f2xx_it.h"
 #include "cmsis_os.h"
+#include "comms.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -45,6 +46,11 @@ extern DMA_HandleTypeDef hdma_adc1;
 extern ADC_HandleTypeDef hadc1;
 
 extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
+
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
+
+extern DMA_Event_t dma_uart_rx;
 
 extern TIM_HandleTypeDef htim1;
 
@@ -155,6 +161,16 @@ void SysTick_Handler(void)
   osSystickHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
+  /* DMA Timer */
+    if (dma_uart_rx.timer == 1)
+      {
+        dma_uart_rx.flag = 1;
+        hdma_usart2_rx.XferCpltCallback(&hdma_usart2_rx);
+      }
+
+    /* DMA Timeout event: set Timeout Flag and call DMA Rx Complete Callback */
+    if (dma_uart_rx.timer) { --dma_uart_rx.timer;}
+
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -164,6 +180,36 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f2xx.s).                    */
 /******************************************************************************/
+
+/**
+* @brief This function handles DMA1 stream5 global interrupt.
+*/
+void DMA1_Stream5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
+
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 stream6 global interrupt.
+*/
+void DMA1_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_tx);
+  /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream6_IRQn 1 */
+}
 
 /**
 * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
@@ -185,7 +231,14 @@ void TIM1_UP_TIM10_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+  /* UART IDLE Interrupt */
+  if((USART2->SR & USART_SR_IDLE) != RESET)
+    {
+      //          USART2->CR = UART_CLEAR_IDLEF;
+      __HAL_UART_CLEAR_IDLEFLAG(handleUART2);
+      /* Start DMA timer */
+      dma_uart_rx.timer = DMA_TIMEOUT_MS;
+    }
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART1_IRQn 1 */

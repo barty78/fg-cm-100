@@ -15,6 +15,11 @@
 #include "global.h"
 #include "comms.h"
 
+/* DMA Timeout event structure
+ * Note: prevCNDTR initial value must be set to maximum size of DMA buffer!
+*/
+DMA_Event_t dma_uart_rx = {0, 0, DMA_BUFFER_LENGTH};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // HAL_UART_RxCpltCallback
@@ -31,17 +36,53 @@
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
- UBaseType_t uxSavedInterruptStatus;
- uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+  UBaseType_t uxSavedInterruptStatus;
+  uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 
-  if (UartHandle == handleUART2)
-  {
-	  if (++rxMessageHead >= RX_BUFFER_LENGTH) rxMessageHead = 0;
+  uint16_t i, pos, start, length;
+  uint16_t currCNDTR = __HAL_DMA_GET_COUNTER(UartHandle->hdmarx);
 
-   HAL_UART_Receive_IT(handleUART2, (uint8_t*)(&(rxBuffer[rxMessageHead])), 1);
+  /* Ignore IDLE Timeout when the received characters exactly filled up the DMA buffer and DMA Rx Complete IT is generated, but there is no new character during timeout */
+  if(dma_uart_rx.flag && currCNDTR == DMA_BUFFER_LENGTH)
+    {
+      dma_uart_rx.flag = 0;
+      return;
+    }
 
-  }
- taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+  /* Determine start position in DMA buffer based on previous CNDTR value */
+  start = (dma_uart_rx.prevCNDTR < DMA_BUFFER_LENGTH) ? (DMA_BUFFER_LENGTH - dma_uart_rx.prevCNDTR) : 0;
+
+  if(dma_uart_rx.flag)    /* Timeout event */
+    {
+      /* Determine new data length based on previous DMA_CNDTR value:
+       *  If previous CNDTR is less than DMA buffer size: there is old data in DMA buffer (from previous timeout) that has to be ignored.
+       *  If CNDTR == DMA buffer size: entire buffer content is new and has to be processed.
+       */
+      length = (dma_uart_rx.prevCNDTR < DMA_BUFFER_LENGTH) ? (dma_uart_rx.prevCNDTR - currCNDTR) : (DMA_BUFFER_LENGTH - currCNDTR);
+      dma_uart_rx.prevCNDTR = currCNDTR;
+      dma_uart_rx.flag = 0;
+    }
+  else                /* DMA Rx Complete event */
+    {
+      length = DMA_BUFFER_LENGTH - start;
+      dma_uart_rx.prevCNDTR = DMA_BUFFER_LENGTH;
+    }
+
+  /* Copy and Process new data */
+  for(i=0,pos=start; i<length; ++i,++pos)
+    {
+      data[i] = dma_rx_buf[pos];
+    }
+  flagPacketReceived = 1;
+
+  //  if (UartHandle == handleUART2)
+  //  {
+  //	  if (++rxMessageHead >= RX_BUFFER_LENGTH) rxMessageHead = 0;
+  //
+  //   HAL_UART_Receive_IT(handleUART2, (uint8_t*)(&(rxBuffer[rxMessageHead])), 1);
+  //
+  //  }
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,21 +100,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
- UBaseType_t uxSavedInterruptStatus;
+  UBaseType_t uxSavedInterruptStatus;
 
- uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+  uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 
   if (UartHandle == handleUART2)
-  {
-//   if (++txMessageTail >= TX_BUFFER_LENGTH) txMessageTail = 0;
+    {
+      //   if (++txMessageTail >= TX_BUFFER_LENGTH) txMessageTail = 0;
       txMessageTail = txMessageHead;
       flagByteTransmitted = 1;  // Set transmission flag: transfer complete
 
-      HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
-      HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
+      HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_RESET);
+      SET_BIT(USART2->CR1, USART_CR1_IDLEIE);
+      HAL_UART_Receive_DMA(handleUART2, (uint8_t*)dma_rx_buf, DMA_BUFFER_LENGTH);
 
-  }
- taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+    }
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -144,7 +187,9 @@ uint8_t initComms()
   for (uint32_t i=0; i<PACKET_BUFFER_LENGTH; i++) packetBuffer[i] = malloc(RX_BUFFER_LENGTH * sizeof(char));
 
  taskEXIT_CRITICAL();
- HAL_UART_Receive_IT(handleUART2, (uint8_t*)(&(rxBuffer[rxMessageHead])), 1);
+
+ SET_BIT(USART2->CR1, USART_CR1_IDLEIE);
+ HAL_UART_Receive_DMA(handleUART2, (uint8_t*)dma_rx_buf, DMA_BUFFER_LENGTH);
 
  return 0;
 }
@@ -167,21 +212,26 @@ uint8_t initComms()
 
 uint8_t writeMessage(char* msg)
 {
- taskENTER_CRITICAL();
- if (strlen(msg) > (TX_BUFFER_LENGTH - txMessageHead))
-   {
-     txMessageHead = 0;
-     txMessageTail = 0;
-   }
-  for (uint32_t i=0; i<strlen(msg); i++)
-  {
-   txBuffer[txMessageHead++] = msg[i];
-   if (txMessageHead >= TX_BUFFER_LENGTH)
-     {
-       txMessageHead = 0;
-     }
-  }
- taskEXIT_CRITICAL();
+//  HAL_UART_AbortReceive(handleUART2);
+  CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);
+  HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
+  HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));  // Send Message
+// taskENTER_CRITICAL();
+// if (strlen(msg) > (TX_BUFFER_LENGTH - txMessageHead))
+//   {
+//     txMessageHead = 0;
+//     txMessageTail = 0;
+//   }
+//  for (uint32_t i=0; i<strlen(msg); i++)
+//  {
+//   txBuffer[txMessageHead++] = msg[i];
+//   if (txMessageHead >= TX_BUFFER_LENGTH)
+//     {
+//       txMessageHead = 0;
+//     }
+//  }
+// taskEXIT_CRITICAL();
 
  return 0;
 }
@@ -207,5 +257,11 @@ void sendResponse(char* response)
 
  sprintf(msg, "%s%02X\n", response, crc);  // Append CRC to message before writing out to Tx
 // strcpy(lastMsg, msg);
- writeMessage(msg);
+// writeMessage(msg);
+
+ CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);
+ HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
+ HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
+ HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));  // Send Message
+
 }

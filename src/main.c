@@ -69,6 +69,9 @@ ADC_HandleTypeDef hadc1;
 
 DMA_HandleTypeDef hdma_adc1;
 
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart2_tx;
+
 CRC_HandleTypeDef hcrc;
 
 IWDG_HandleTypeDef hiwdg;
@@ -127,6 +130,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 //  l_init_board(&config);
+  handleUART2 = &huart2;
+  handleDMA1 = &hdma_adc1;
+  handleADC1 = &hadc1;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -159,9 +165,7 @@ int main(void)
 //  MX_IWDG_Init();
 //  MX_CRC_Init();
 
-  handleUART2 = &huart2;
-  handleDMA1 = &hdma_adc1;
-  handleADC1 = &hadc1;
+
 
 
   /* USER CODE BEGIN 2 */
@@ -547,7 +551,7 @@ static void MX_USART2_UART_Init(void)
 {
 
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -559,6 +563,11 @@ static void MX_USART2_UART_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
+  /* USART1 interrupt Init */
+  HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(USART2_IRQn);
+
 }
 
 /* USART3 init function */
@@ -605,7 +614,7 @@ static void MX_USART6_UART_Init(void)
 static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
-//  __HAL_RCC_DMA1_CLK_ENABLE();
+  //  __HAL_RCC_DMA1_CLK_ENABLE();
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
@@ -613,9 +622,16 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
-  /* DMI interrupt init for USART2_TX */
-//  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
-//  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration - USART2_RX */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 1);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+
+  /* DMA1_Stream6_IRQn interrupt configuration - USART2_TX*/
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
