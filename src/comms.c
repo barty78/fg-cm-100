@@ -64,16 +64,27 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
     }
   else                /* DMA Rx Complete event */
     {
-      length = DMA_BUFFER_LENGTH - start;
-      dma_uart_rx.prevCNDTR = DMA_BUFFER_LENGTH;
+      if (currCNDTR + dma_uart_rx.prevCNDTR > DMA_BUFFER_LENGTH)
+        {
+          length = (DMA_BUFFER_LENGTH - start) + (DMA_BUFFER_LENGTH - currCNDTR); // Calculate length when circular buffer wraps
+        } else {
+            length = DMA_BUFFER_LENGTH - start;
+        }
+      //        dma_uart_rx.prevCNDTR = DMA_BUFFER_LENGTH;
+      dma_uart_rx.prevCNDTR = currCNDTR;
     }
 
   /* Copy and Process new data */
   for(i=0,pos=start; i<length; ++i,++pos)
     {
-      data[i] = dma_rx_buf[pos];
-    }
-  flagPacketReceived = 1;
+      if (pos >= DMA_BUFFER_LENGTH) {
+          dataBuf[i] = dma_rx_buf[pos - DMA_BUFFER_LENGTH];    // Went past end of circular buffer
+      } else {
+          dataBuf[i] = dma_rx_buf[pos];
+      }
+  }
+  flagPacketReceived = 0;
+  if (length != 0) flagPacketReceived = 1;
 
   //  if (UartHandle == handleUART2)
   //  {
@@ -110,10 +121,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
       txMessageTail = txMessageHead;
       flagByteTransmitted = 1;  // Set transmission flag: transfer complete
 
-      HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_RESET);
-      SET_BIT(USART2->CR1, USART_CR1_IDLEIE);
-      HAL_UART_Receive_DMA(handleUART2, (uint8_t*)dma_rx_buf, DMA_BUFFER_LENGTH);
+      HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_RESET);      // Disable TX
+      HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_RESET);      // Enable RX
+      SET_BIT(USART2->CR1, USART_CR1_IDLEIE);                                     // Enable Idle Detection
+      HAL_UART_Receive_DMA(handleUART2, (uint8_t*)dma_rx_buf, DMA_BUFFER_LENGTH); // Initiate RX
 
     }
   taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
@@ -213,10 +224,11 @@ uint8_t initComms()
 uint8_t writeMessage(char* msg)
 {
 //  HAL_UART_AbortReceive(handleUART2);
-  CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);
-  HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);
-  HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));  // Send Message
+  CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);                             // Disable Idle Detection
+  HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_SET);  // Enable TX
+  HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET);  // Disable RX
+  HAL_Delay(10);
+  HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));       // Send Message
 // taskENTER_CRITICAL();
 // if (strlen(msg) > (TX_BUFFER_LENGTH - txMessageHead))
 //   {
@@ -259,9 +271,9 @@ void sendResponse(char* response)
 // strcpy(lastMsg, msg);
 // writeMessage(msg);
 
- CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);
- HAL_GPIO_TogglePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin);
- HAL_GPIO_TogglePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin);
- HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));  // Send Message
+ CLEAR_BIT(USART1->CR1, USART_CR1_IDLEIE);                            // Disable Idle Detection
+ HAL_GPIO_WritePin(RS485_TXE_GPIO_Port, RS485_TXE_Pin, GPIO_PIN_SET); // Enable TX
+ HAL_GPIO_WritePin(RS485_RXE_GPIO_Port, RS485_RXE_Pin, GPIO_PIN_SET); // Disable RX
+ HAL_UART_Transmit_DMA(handleUART2, (uint8_t*)msg, strlen(msg));      // Send Message
 
 }

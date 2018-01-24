@@ -4,7 +4,7 @@
 #include "stm32f2xx_hal.h"
 #include "cmsis_os.h"
 
-#define DMA_BUFFER_LENGTH 256
+#define DMA_BUFFER_LENGTH 64
 #define RX_BUFFER_LENGTH 256
 #define TX_BUFFER_LENGTH 512
 #define PACKET_BUFFER_LENGTH 32
@@ -36,7 +36,7 @@ char lastMsg[RESPONSE_BUFFER_LENGTH];
 char dma_rx_buf[DMA_BUFFER_LENGTH];
 char rxBuffer[RX_BUFFER_LENGTH], txBuffer[TX_BUFFER_LENGTH];
 char* packetBuffer[PACKET_BUFFER_LENGTH];
-char data[DMA_BUFFER_LENGTH];
+char dataBuf[DMA_BUFFER_LENGTH];
 
 unsigned int rxMessageTail, rxMessageHead, txMessageTail, txMessageHead;
 unsigned int packetTail, packetHead, packetPointer, flagPacketReceived;

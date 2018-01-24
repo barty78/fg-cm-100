@@ -353,10 +353,10 @@ void parsePacketThread(void const *argument)
 
   if (received == 1)
     {
-      if (data[0] == SOF_RX)
+      if (dataBuf[0] == SOF_RX)
         {
           taskENTER_CRITICAL();
-          for (i=0; i<RX_BUFFER_LENGTH && data[i] != '\n'; i++) command[i] = data[i];
+          for (i=0; i<RX_BUFFER_LENGTH && dataBuf[i] != '\n'; i++) command[i] = dataBuf[i];
 //          if (++packetTail >= PACKET_BUFFER_LENGTH) packetTail = 0;
 
 #ifdef DISABLE
@@ -377,13 +377,15 @@ void parsePacketThread(void const *argument)
 
           flagPacketReceived = 0;
           taskEXIT_CRITICAL();
+
+          if (i < RX_BUFFER_LENGTH)  // Check for Rx Buffer Overrun
+            {
+              command[i] = 0;  // Null terminate the command string
+              parseCommand(command); // Only parse the command if it has a valid SOF char.   }
+            }
         }
 
-      if (i < RX_BUFFER_LENGTH)  // Check for Rx Buffer Overrun
-        {
-          command[i] = 0;  // Null terminate the command string
-          parseCommand(command); // Only parse the command if it has a valid SOF char.   }
-        }
+
     }
 
   osThreadYield();
